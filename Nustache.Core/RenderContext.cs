@@ -44,6 +44,10 @@ namespace Nustache.Core
                     {
                         return value;
                     }
+                    else
+                    {
+                        var s = value.GetType().ToString();
+                    }
                 }
             }
 
@@ -93,12 +97,52 @@ namespace Nustache.Core
                     yield return value;
                 }
             }
+            else if (value is IDictionary<string,object>) // Dictionaries also implement IEnumerable
+            // so this has to be checked before it.
+            {
+                if (((IDictionary<string, object>)value).Count > 0)
+                {
+                    yield return value;
+                }
+            }
             else if (value is IEnumerable)
             {
                 foreach (var item in ((IEnumerable)value))
                 {
                     yield return item;
                 }
+            }
+            else if (value != null && value.GetType().GetProperty("Value") != null)
+            {
+                var pi = value.GetType().GetProperty("Value");
+                var v=pi.GetValue(value, null);
+                if(v is IDictionary)
+                {
+                     if (((IDictionary)v).Count > 0)
+                    {
+                        yield return v;
+                    }
+                }
+                else if(v is  IDictionary<string,object>)
+                {
+                    if (((IDictionary<string, object>)v).Count > 0)
+                    {
+                        yield return v;
+                    }
+                }
+                else  if (v is IEnumerable)
+                {
+                    foreach (var item in ((IEnumerable)v))
+                    {
+                        yield return item;
+                    }
+                }
+                else
+                {
+                    yield return v;
+                }
+                    
+                
             }
             else if (value != null)
             {

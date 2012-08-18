@@ -24,6 +24,7 @@ namespace Nustache.Core
                 ?? PropertyDescriptorValueGetter.GetPropertyDescriptorValueGetter(target, name)
                 ?? GenericDictionaryValueGetter.GetGenericDictionaryValueGetter(target, name)
                 ?? DictionaryValueGetter.GetDictionaryValueGetter(target, name)
+                ?? GenericValueValueGetter.GetValueValueGetter(target, name)
                 ?? MethodInfoValueGetter.GetMethodInfoValueGetter(target, name)
                 ?? PropertyInfoValueGetter.GetPropertyInfoValueGetter(target, name)
                 ?? FieldInfoValueGetter.GetFieldInfoValueGetter(target, name)
@@ -263,7 +264,7 @@ namespace Nustache.Core
             return _target[_key];
         }
     }
-
+    
     internal class GenericDictionaryValueGetter : ValueGetter
     {
         internal static GenericDictionaryValueGetter GetGenericDictionaryValueGetter(object target, string name)
@@ -311,7 +312,38 @@ namespace Nustache.Core
             return _getMethod.Invoke(_target, new object[] { _key });
         }
     }
+    internal class GenericValueValueGetter : ValueGetter
+    {
+        internal static GenericValueValueGetter GetValueValueGetter(object target, string name)
+        {
+            if (target is IDictionary<string, object>)
+                return null;
+            if (target != null && target.GetType().GetProperty("Value") != null)
+            {
+                var pi = target.GetType().GetProperty("Value");
+                var v = pi.GetValue(target, null);
+                if (v != null)
+                {
+                    return new GenericValueValueGetter(target,name,v);
+                }
+            }
+            return null;
+        }
+        private readonly object _target;
+        private readonly string _key;
+        private readonly object _value;
 
+        private GenericValueValueGetter(object target, string key, object val)
+        {
+            _target = target;
+            _key=key;
+            _value = ((IDictionary<string,object>)val)[key];
+        }
+        public override object GetValue()
+        {
+            return _value;
+        }
+    }
     internal class NoValueGetter : ValueGetter
     {
         public override object GetValue()
